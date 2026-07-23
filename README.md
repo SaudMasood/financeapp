@@ -1,6 +1,6 @@
 # 💰 Finance App
 
-A modern, clean **personal finance tracking mobile application** built with **Flutter**. Track income and expenses, set monthly budgets by category, view visual spending reports, and manage everything with a secure, offline-first architecture backed by **Firebase**.
+A modern, clean **personal finance tracking mobile application** built with **Flutter**. Track income and expenses, set monthly budgets by category, view visual spending reports, and manage everything with a secure, offline-first architecture backed by  **Firebase**.
 
 ---
 
