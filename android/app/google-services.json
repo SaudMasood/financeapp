@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960084846767",
+    "project_id": "finance-c2c0d",
+    "storage_bucket": "finance-c2c0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960084846767:android:33b88e600f6841c881cc5a",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKPksesd_TQaOhyikzIY39EiLa-EVhWqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
