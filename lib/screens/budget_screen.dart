@@ -4,6 +4,7 @@ import '../database/database_helper.dart';
 import '../models/budget_model.dart';
 import '../models/transaction_model.dart';
 import '../services/firebase_service.dart';
+import '../services/notification_service.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -158,9 +159,18 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       );
 
                       await dbHelper.insertBudget(budget);
-                      firebaseService.syncBudget(budget);                      if (context.mounted) {
+
+                      await firebaseService.syncBudget(budget);
+
+                      await NotificationService.showNotification(
+                        title: "Budget Created",
+                        body: "$selectedCategory budget saved successfully.",
+                      );
+
+                      if (context.mounted) {
                         Navigator.pop(context);
                       }
+
                       loadData();
                     } catch (e) {
                       print('SAVE BUDGET ERROR: $e');
@@ -239,7 +249,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
       BudgetModel b = budgets[i];
       double spent = amountSpentForCategory(b.category);
       double progress = b.limitAmount > 0 ? spent / b.limitAmount : 0;
-
+      if (spent >= b.limitAmount * 0.9 && spent < b.limitAmount) {
+        NotificationService.showNotification(
+          title: "Budget Alert",
+          body: "You have used 90% of your ${b.category} budget.",
+        );
+      }
       if (progress > 1) {
         progress = 1;
       }

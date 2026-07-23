@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../database/database_helper.dart';
 import '../services/firebase_service.dart';
 import '../models/transaction_model.dart';
-
+import '../services/notification_service.dart';
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
 
@@ -99,10 +99,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       await dbHelper.insertTransaction(transaction);
 
-      // Local save always happens first (works offline). This is a
-      // best-effort cloud backup and never blocks or fails the save.
-      firebaseService.syncTransaction(transaction);
+      await firebaseService.syncTransaction(transaction);
 
+      await NotificationService.showNotification(
+        title: "Transaction Saved",
+        body: "Rs. ${transaction.amount} added successfully.",
+      );
+
+      Navigator.pop(context);
       setState(() {
         isSaving = false;
       });
@@ -117,6 +121,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       });
       print('SAVE ERROR: $e');
     }
+
+
+
   }
 
   @override

@@ -62,24 +62,36 @@ class FirebaseService {
 
 
   Future<void> syncTransaction(TransactionModel transaction) async {
+    print("syncTransaction started");
 
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return;
+    if (user == null) {
+      print("User is null");
+      return;
+    }
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(user.uid)
-        .collection("transactions")
-        .add({
-      "title": transaction.title,
-      "amount": transaction.amount,
-      "category": transaction.category,
-      "type": transaction.type,
-      "date": transaction.date,
-      "note": transaction.note,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
+    print("UID: ${user.uid}");
+
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .collection("transactions")
+          .add({
+        "title": transaction.title,
+        "amount": transaction.amount,
+        "category": transaction.category,
+        "type": transaction.type,
+        "date": transaction.date,
+        "note": transaction.note,
+        "createdAt": FieldValue.serverTimestamp(),
+      });
+
+      print("Firestore save success");
+    } catch (e) {
+      print("Firestore Error: $e");
+    }
   }
 
   // ---------------- FIRESTORE SYNC ----------------
