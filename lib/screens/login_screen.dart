@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import '../services/firebase_service.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
+import 'splash_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,35 +12,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   FirebaseService firebaseService = FirebaseService();
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
   bool isLoading = false;
-  bool biometricAvailable = false;
-
-  final LocalAuthentication localAuth = LocalAuthentication();
-
-  @override
-  void initState() {
-    super.initState();
-    checkBiometricSupport();
-  }
-
-  Future<void> checkBiometricSupport() async {
-    bool canCheck = false;
-    try {
-      canCheck = await localAuth.canCheckBiometrics;
-    } catch (e) {
-      canCheck = false;
-    }
-
-    setState(() {
-      biometricAvailable = canCheck;
-    });
-  }
 
   Future<void> loginUser() async {
     setState(() {
@@ -85,58 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const SplashScreen()),
         );
       }
     } else {
       setState(() {
         errorMessage = result;
       });
-    }
-  }
-
-  Future<void> loginWithBiometrics() async {
-    setState(() {
-      errorMessage = '';
-    });
-
-    if (biometricAvailable == false) {
-      setState(() {
-        errorMessage = 'Biometric login not available on this device';
-      });
-      return;
-    }
-
-    bool authenticated = false;
-    try {
-      authenticated = await localAuth.authenticate(
-        localizedReason: 'Scan your fingerprint to login',
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Biometric login failed';
-      });
-      return;
-    }
-
-    if (authenticated == true) {
-      // Biometric login only works if the user already signed in with
-      // Firebase before on this device (Firebase keeps the session alive).
-      if (firebaseService.isLoggedIn()) {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
-      } else {
-        setState(() {
-          errorMessage = 'Please login with email and password first';
-        });
-      }
     }
   }
 
@@ -203,46 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Login', style: TextStyle(fontSize: 16)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('OR', style: TextStyle(color: Colors.grey)),
-                  ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: loginWithBiometrics,
-                      child: Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF1E88E5).withOpacity(0.1),
-                          border: Border.all(color: const Color(0xFF1E88E5), width: 1.5),
-                        ),
-                        child: const Icon(
-                          Icons.fingerprint,
-                          size: 34,
-                          color: Color(0xFF1E88E5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Login with Fingerprint',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                  ],
                 ),
               ),
               const SizedBox(height: 20),

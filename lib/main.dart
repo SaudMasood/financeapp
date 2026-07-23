@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'database/database_helper.dart';
 import 'screens/splash_screen.dart';
-import 'screens/home_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -22,10 +20,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   DatabaseHelper dbHelper = DatabaseHelper();
   bool isDbReady = false;
-  bool isLoggedIn = false;
 
   @override
   void initState() {
@@ -36,11 +32,8 @@ class _MyAppState extends State<MyApp> {
   Future<void> setupApp() async {
     await dbHelper.createDatabase();
 
-    bool loggedIn = FirebaseAuth.instance.currentUser != null;
-
     setState(() {
       isDbReady = true;
-      isLoggedIn = loggedIn;
     });
   }
 
@@ -63,7 +56,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E88E5)),
         useMaterial3: true,
       ),
-      home: isLoggedIn ? const HomeScreen() : const SplashScreen(),
+      home: const SplashScreen(),   // ← always Splash. It decides Login vs Lock vs Home.
     );
   }
 }

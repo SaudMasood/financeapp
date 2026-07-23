@@ -4,111 +4,116 @@ import '../models/transaction_model.dart';
 import '../models/budget_model.dart';
 
 class DatabaseHelper {
-
-  late Database db;
+  Database? db;
 
   Future<void> createDatabase() async {
-    db = await openDatabase(
-      join(await getDatabasesPath(), 'finance_app.db'),
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute(
-          'CREATE TABLE transactions ('
-              'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-              'title TEXT, '
-              'amount REAL, '
-              'type TEXT, '
-              'category TEXT, '
-              'date TEXT, '
-              'note TEXT)',
-        );
+    if (db != null) {
+      return;
+    }
 
-        await db.execute(
-          'CREATE TABLE budgets ('
-              'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-              'category TEXT, '
-              'limitAmount REAL, '
-              'month TEXT)',
-        );
+    String path = join(await getDatabasesPath(), 'finance_app.db');
+
+    db = await openDatabase(
+      path,
+      // Bumped from 1 -> 2 because the `budgets` table was added after
+      // `transactions` already existed on devices. Without a version bump,
+      // onCreate never runs again on those devices and `budgets` never
+      // gets created, causing "no such table: budgets" on insert.
+      version: 2,
+      onCreate: (Database database, int version) async {
+        await database.execute('''
+          CREATE TABLE transactions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            amount REAL,
+            type TEXT,
+            category TEXT,
+            date TEXT,
+            note TEXT
+          )
+        ''');
+
+        await database.execute('''
+          CREATE TABLE budgets(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            limitAmount REAL,
+            month TEXT
+          )
+        ''');
+      },
+      onUpgrade: (Database database, int oldVersion, int newVersion) async {
+        // Runs on existing installs that already have version 1
+        // (transactions table only, no budgets table yet).
+        if (oldVersion < 2) {
+          await database.execute('''
+            CREATE TABLE IF NOT EXISTS budgets(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              category TEXT,
+              limitAmount REAL,
+              month TEXT
+            )
+          ''');
+        }
       },
     );
   }
 
   // ---------------- TRANSACTIONS ----------------
 
-  Future<void> insertTransaction(TransactionModel transaction) async {
-    await db.insert(
-      'transactions',
-      transaction.toMap(),
-    );
+  Future<int> insertTransaction(TransactionModel transaction) async {
+    await createDatabase();
+    return await db!.insert('transactions', transaction.toMap());
   }
 
   Future<List<TransactionModel>> getTransactions() async {
-    List<Map<String, dynamic>> maps = await db.query(
+    await createDatabase();
+
+    List<Map<String, dynamic>> maps = await db!.query(
       'transactions',
       orderBy: 'id DESC',
     );
 
-    List<TransactionModel> transactions = [];
+    List<TransactionModel> result = [];
     for (int i = 0; i < maps.length; i++) {
-      transactions.add(TransactionModel.fromMap(maps[i]));
+      result.add(TransactionModel.fromMap(maps[i]));
     }
-    return transactions;
+    return result;
   }
 
-  Future<void> updateTransaction(TransactionModel transaction) async {
-    await db.update(
-      'transactions',
-      transaction.toMap(),
-      where: 'id = ?',
-      whereArgs: [transaction.id],
-    );
-  }
-
-  Future<void> deleteTransaction(int id) async {
-    await db.delete(
-      'transactions',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<int> deleteTransaction(int id) async {
+    await createDatabase();
+    return await db!.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
   // ---------------- BUDGETS ----------------
 
-  Future<void> insertBudget(BudgetModel budget) async {
-    await db.insert(
-      'budgets',
-      budget.toMap(),
-    );
+  Future<int> insertBudget(BudgetModel budget) async {
+    await createDatabase();
+
+    Map<String, dynamic> data = budget.toMap();
+    data.remove('id'); // let SQLite auto-generate the id on insert
+
+    return await db!.insert('budgets', data);
   }
 
   Future<List<BudgetModel>> getBudgets() async {
-    List<Map<String, dynamic>> maps = await db.query(
+    await createDatabase();
+
+    List<Map<String, dynamic>> maps = await db!.query(
       'budgets',
       orderBy: 'id DESC',
     );
 
-    List<BudgetModel> budgets = [];
+    List<BudgetModel> result = [];
     for (int i = 0; i < maps.length; i++) {
-      budgets.add(BudgetModel.fromMap(maps[i]));
+      result.add(BudgetModel.fromMap(maps[i]));
     }
-    return budgets;
+    return result;
   }
 
-  Future<void> updateBudget(BudgetModel budget) async {
-    await db.update(
-      'budgets',
-      budget.toMap(),
-      where: 'id = ?',
-      whereArgs: [budget.id],
-    );
-  }
-
-  Future<void> deleteBudget(int id) async {
-    await db.delete(
-      'budgets',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<int> deleteBudget(int id) async {
+    await createDatabase();
+    return await db!.delete('budgets', where: 'id = ?', whereArgs: [id]);
   }
 }

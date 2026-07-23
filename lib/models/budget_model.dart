@@ -24,7 +24,12 @@ class BudgetModel {
     return BudgetModel(
       id: map['id'],
       category: map['category'],
-      limitAmount: map['limitAmount'],
+      // SQLite REAL columns can come back as int when the stored value
+      // has no fractional part (e.g. 5000 instead of 5000.0). Assigning
+      // that directly to a `double` field throws:
+      // "type 'int' is not a subtype of type 'double'".
+      // (map['limitAmount'] as num).toDouble() handles both cases safely.
+      limitAmount: (map['limitAmount'] as num).toDouble(),
       month: map['month'],
     );
   }

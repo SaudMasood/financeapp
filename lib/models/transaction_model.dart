@@ -2,7 +2,7 @@ class TransactionModel {
   int? id;
   String title;
   double amount;
-  String type; // "income" or "expense"
+  String type; // 'income' or 'expense'
   String category;
   String date; // stored as yyyy-MM-dd
   String note;

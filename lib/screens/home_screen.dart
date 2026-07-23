@@ -15,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   int currentIndex = 0;
 
   @override
@@ -38,17 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(child: bodyToShow),
       floatingActionButton: currentIndex == 0 || currentIndex == 1
           ? FloatingActionButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddTransactionScreen(),
-                  ),
-                );
-                setState(() {});
-              },
-              child: const Icon(Icons.add),
-            )
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+          );
+          setState(() {});
+        },
+        child: const Icon(Icons.add),
+      )
           : null,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -78,8 +75,8 @@ class DashboardBody extends StatefulWidget {
 }
 
 class _DashboardBodyState extends State<DashboardBody> {
-
   DatabaseHelper dbHelper = DatabaseHelper();
+
   List<TransactionModel> allTransactions = [];
   double totalIncome = 0;
   double totalExpense = 0;
@@ -99,11 +96,11 @@ class _DashboardBodyState extends State<DashboardBody> {
     double income = 0;
     double expense = 0;
 
-    for (var t in transactions) {
-      if (t.type == "income") {
-        income += t.amount;
+    for (int i = 0; i < transactions.length; i++) {
+      if (transactions[i].type == "income") {
+        income = income + transactions[i].amount;
       } else {
-        expense += t.amount;
+        expense = expense + transactions[i].amount;
       }
     }
 
@@ -114,122 +111,178 @@ class _DashboardBodyState extends State<DashboardBody> {
       isLoading = false;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     double balance = totalIncome - totalExpense;
-    List<TransactionModel> recent = allTransactions.take(5).toList();
 
-    return RefreshIndicator(
-      onRefresh: loadData,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E88E5),
-              borderRadius: BorderRadius.circular(16),
+    // build a list of recent transaction widgets manually
+    List<Widget> recentWidgets = [];
+
+    if (allTransactions.isEmpty) {
+      recentWidgets.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Text('No transactions yet', style: TextStyle(color: Colors.grey)),
+        ),
+      );
+    } else {
+      int count = 0;
+      for (int i = 0; i < allTransactions.length; i++) {
+        if (count >= 5) break;
+
+        TransactionModel t = allTransactions[i];
+
+        Color color;
+        IconData icon;
+        String amountText;
+
+        if (t.type == 'income') {
+          color = Colors.green;
+          icon = Icons.arrow_downward;
+          amountText = '+ Rs. ${t.amount.toStringAsFixed(0)}';
+        } else {
+          color = Colors.red;
+          icon = Icons.arrow_upward;
+          amountText = '- Rs. ${t.amount.toStringAsFixed(0)}';
+        }
+
+        recentWidgets.add(
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: color.withOpacity(0.1),
+                child: Icon(icon, color: color),
+              ),
+              title: Text(t.title),
+              subtitle: Text('${t.category} • ${t.date}'),
+              trailing: Text(
+                amountText,
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        );
+
+        count = count + 1;
+      }
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        automaticallyImplyLeading: false,
+      ),
+      body: RefreshIndicator(
+        onRefresh: loadData,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // balance card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E88E5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Total Balance', style: TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Rs. ${balance.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // income and expense cards
+            Row(
               children: [
-                const Text('Total Balance', style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 6),
-                Text(
-                  'Rs. ${balance.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.arrow_downward, color: Colors.green),
+                        const SizedBox(height: 8),
+                        const Text('Income', style: TextStyle(color: Colors.green)),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Rs. ${totalIncome.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.arrow_upward, color: Colors.red),
+                        const SizedBox(height: 8),
+                        const Text('Expense', style: TextStyle(color: Colors.red)),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Rs. ${totalExpense.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: summaryCard('Income', totalIncome, Colors.green, Icons.arrow_downward),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: summaryCard('Expense', totalExpense, Colors.red, Icons.arrow_upward),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Recent Transactions',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          recent.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Text('No transactions yet', style: TextStyle(color: Colors.grey)),
-                )
-              : Column(
-                  children: recent.map((t) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: t.type == 'income'
-                              ? Colors.green.shade100
-                              : Colors.red.shade100,
-                          child: Icon(
-                            t.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: t.type == 'income' ? Colors.green : Colors.red,
-                          ),
-                        ),
-                        title: Text(t.title),
-                        subtitle: Text('${t.category} • ${t.date}'),
-                        trailing: Text(
-                          (t.type == 'income' ? '+ ' : '- ') + 'Rs. ${t.amount.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: t.type == 'income' ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-        ],
-      ),
-    );
-  }
 
-  Widget summaryCard(String label, double amount, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
-          Text(label, style: TextStyle(color: color)),
-          const SizedBox(height: 4),
-          Text(
-            'Rs. ${amount.toStringAsFixed(0)}',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
-          ),
-        ],
+            const SizedBox(height: 20),
+
+            const Text(
+              'Recent Transactions',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            // recent transaction cards
+            Column(children: recentWidgets),
+          ],
+        ),
       ),
     );
   }

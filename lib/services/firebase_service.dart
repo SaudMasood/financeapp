@@ -60,6 +60,28 @@ class FirebaseService {
     return auth.currentUser != null;
   }
 
+
+  Future<void> syncTransaction(TransactionModel transaction) async {
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("transactions")
+        .add({
+      "title": transaction.title,
+      "amount": transaction.amount,
+      "category": transaction.category,
+      "type": transaction.type,
+      "date": transaction.date,
+      "note": transaction.note,
+      "createdAt": FieldValue.serverTimestamp(),
+    });
+  }
+
   // ---------------- FIRESTORE SYNC ----------------
   // Best-effort cloud backup of local data. The app always reads/writes
   // sqflite first (see DatabaseHelper) so it keeps working fully offline;
@@ -67,23 +89,7 @@ class FirebaseService {
   // Firestore also has offline persistence enabled by default on mobile,
   // so calls made while offline are queued and sent once back online.
 
-  Future<void> syncTransaction(TransactionModel transaction) async {
-    String? uid = auth.currentUser?.uid;
-    if (uid == null) {
-      return;
-    }
 
-    try {
-      await firestore
-          .collection('users')
-          .doc(uid)
-          .collection('transactions')
-          .add(transaction.toMap());
-    } catch (e) {
-      // Silently ignore. Local sqflite copy is already saved,
-      // so the user's data is never lost even if this fails.
-    }
-  }
 
   Future<void> syncBudget(BudgetModel budget) async {
     String? uid = auth.currentUser?.uid;
