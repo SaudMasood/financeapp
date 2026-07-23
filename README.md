@@ -175,3 +175,5 @@ This project, including its source code, architecture, and documentation, is the
 ## 🙋 Contact
 
 For questions, feedback, or collaboration inquiries regarding this project, please reach out to **Saud Masood** directly.
+Email: saudmasood974@gmail.com
+
