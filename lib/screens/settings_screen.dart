@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
+import '../main.dart';
 import '../services/firebase_service.dart';
 import 'login_screen.dart';
 
@@ -50,8 +51,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> toggleDarkMode(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkModeEnabled', value);
+    await MyApp.of(context)?.changeTheme(value);
+
     setState(() {
       darkModeEnabled = value;
     });
