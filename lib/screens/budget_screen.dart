@@ -35,15 +35,19 @@ class _BudgetScreenState extends State<BudgetScreen> {
       await dbHelper.createDatabase();
 
       List<BudgetModel> budgetList = await dbHelper.getBudgets();
-      List<TransactionModel> transactionList = await dbHelper.getTransactions();
+      List<TransactionModel> transactionList =
+      await dbHelper.getTransactions();
 
       setState(() {
         budgets = budgetList;
         transactions = transactionList;
         isLoading = false;
       });
+
+
     } catch (e) {
-      print("Budget Screen Error: $e");
+      debugPrint("Budget Screen Error: $e");
+
       setState(() {
         isLoading = false;
       });

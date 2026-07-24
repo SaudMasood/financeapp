@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/database_helper.dart';
+import '../models/budget_model.dart';
 import '../services/firebase_service.dart';
 import '../models/transaction_model.dart';
 import '../services/notification_service.dart';
@@ -52,7 +53,45 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       });
     }
   }
+  Future<void> checkBudgetLimit(TransactionModel transaction) async {
+    if (transaction.type != 'expense') return;
 
+    List<BudgetModel> budgets = await dbHelper.getBudgets();
+    List<TransactionModel> transactions = await dbHelper.getTransactions();
+
+    String currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+
+    for (BudgetModel budget in budgets) {
+      if (budget.category == transaction.category &&
+          budget.month == currentMonth) {
+
+        double spent = 0;
+
+        for (TransactionModel t in transactions) {
+          if (t.type == 'expense' &&
+              t.category == budget.category &&
+              t.date.startsWith(currentMonth)) {
+            spent += t.amount;
+          }
+        }
+
+        if (spent >= budget.limitAmount * 0.9 &&
+            spent < budget.limitAmount) {
+          await NotificationService.showNotification(
+            title: "Budget Alert",
+            body: "You have used 90% of your ${budget.category} budget.",
+          );
+        }
+
+        if (spent >= budget.limitAmount) {
+          await NotificationService.showNotification(
+            title: "Budget Exceeded",
+            body: "You have exceeded your ${budget.category} budget.",
+          );
+        }
+      }
+    }
+  }
   Future<void> saveTransaction() async {
     setState(() {
       errorMessage = '';
@@ -99,6 +138,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       await dbHelper.insertTransaction(transaction);
 
+// Check if the budget has reached 90% or exceeded
+      await checkBudgetLimit(transaction);
+
       await firebaseService.syncTransaction(transaction);
 
       await NotificationService.showNotification(
@@ -106,7 +148,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         body: "Rs. ${transaction.amount} added successfully.",
       );
 
-      Navigator.pop(context);
       setState(() {
         isSaving = false;
       });

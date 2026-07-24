@@ -34,6 +34,9 @@ class _ReportScreenState extends State<ReportScreen> {
   Future<void> loadData() async {
     await dbHelper.createDatabase();
 
+
+
+
     List<TransactionModel> list = await dbHelper.getTransactions();
 
     Map<String, double> totals = {};

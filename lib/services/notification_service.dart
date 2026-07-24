@@ -1,7 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin notificationPlugin =
+  static final FlutterLocalNotificationsPlugin
+  flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
@@ -9,32 +10,50 @@ class NotificationService {
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const InitializationSettings settings =
-    InitializationSettings(android: androidSettings);
+    InitializationSettings(
+      android: androidSettings,
+    );
 
-    await notificationPlugin.initialize(settings);
+    await flutterLocalNotificationsPlugin.initialize(settings);
+
+    final androidPlugin =
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    final granted =
+    await androidPlugin?.requestNotificationsPermission();
+
+    print("Notification Permission = $granted");
   }
 
   static Future<void> showNotification({
     required String title,
     required String body,
   }) async {
+    print("Notification function called");
+
     const AndroidNotificationDetails androidDetails =
     AndroidNotificationDetails(
       'finance_channel',
       'Finance Notifications',
       channelDescription: 'Finance App Notifications',
-      importance: Importance.high,
+      importance: Importance.max,
       priority: Priority.high,
     );
 
     const NotificationDetails details =
-    NotificationDetails(android: androidDetails);
+    NotificationDetails(
+      android: androidDetails,
+    );
 
-    await notificationPlugin.show(
+    await flutterLocalNotificationsPlugin.show(
       0,
       title,
       body,
       details,
     );
+
+    print("Notification sent");
   }
 }
